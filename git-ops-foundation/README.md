@@ -57,3 +57,52 @@ Instead of writing raw YAML from sratch, we can use Helm templates for beginning
    ```
 2. Use the builtin `nginx` demo image to prove that the pipeline works
    - change `replicaCount: 1` to `replicaCount: 3` (to use 3 pods running via `kind`)
+
+## GitOps Pipeline (ArgoCD)
+Now, we install the brain of our GitOps operation: ArgoCD
+1. Create a namespace and install ArgoCD
+   ```[bash]
+   kubectl create namespace argocd
+    
+   kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+   ```
+2. Check the status of pods (once they are healthy and in running state)
+   ```[bash]
+   kubectl get pods -n argocd -w
+   ```
+3. Login the ArgoCD web UI by port forwarding to allow windows login to browser
+   ```[bash]
+   kubectl port-forward svc/argocd-server -n argocd 8080:443
+   ```
+   3.1. Fetch `Admin` password from a new WSL terminal
+   ```[bash]
+   kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+   ```
+   *Login with Admin and the password just captured with the above command*
+
+## Connecting the pipeline [github - argocd]
+1. Create an argoCD app definition `argo-app.yaml`
+   ```[yaml]
+   apiVersion: argoproj.io/v1alpha1
+   kind: Application
+   metadata:
+   name: my-gitops-app
+   namespace: argocd
+   spec:
+   project: default
+   source:
+      repoURL: https://github.com/<YOUR-USERNAME>/<YOUR-REPO>.git
+      path: <ROOT-OF-YOUR-REPO>/my-webapp
+      targetRevision: HEAD
+   destination:
+      server: https://kubernetes.default.svc
+      namespace: default
+   syncPolicy:
+      automated:
+         prune: true
+         selfHeal: true
+   ```
+2. Apply it to cluster
+   ```[bash]
+   kubectl apply -f argo-app.yaml
+   ```

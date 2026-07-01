@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: my-gitops-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/bishalprasad321/k8s-dev.git
+    path: git-ops-foundation/my-webapp
+    targetRevision: HEAD
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
