@@ -30,3 +30,30 @@ INFO: I've used Ubuntu terminal by enabling WSL inside my Windows.
    
    ./get_helm.sh
     ```
+## Local cluster setup
+1. Create a file named `kind-config.yaml`
+   ```[yaml]
+   kind: Cluster
+   apiVersion: kind.x-k8s.io/v1alpha4
+   nodes:
+    - role: control=plane
+    - role: worker
+    - role: worker
+   ```
+2. Create the cluster usging the above configuration file
+   ```[bash]
+   kind create cluster --name cka-cluster --config kind-config.yaml
+   ```
+3. Verify that the nodes are running
+   ```[bash]
+   kubectl get nodes
+   ```
+
+## Using Helm for application
+Instead of writing raw YAML from sratch, we can use Helm templates for beginning
+1. Create a new helm chart
+   ```[bash]
+   helm create my-webapp
+   ```
+2. Use the builtin `nginx` demo image to prove that the pipeline works
+   - change `replicaCount: 1` to `replicaCount: 3` (to use 3 pods running via `kind`)
